@@ -1,14 +1,16 @@
 module Authorization
 
 export AbstractResource, AbstractClient, Permission,  # Types
-       @add_required_fields_resource, @add_required_fields_client, 
-       create!, read, update!, delete!,               # Verbs
-       getpermission, setpermission!, setexpiry!,     # get/set
-       haspermission,  # Query permission
-       permissions_conflict
+       getpermission, setpermission!, setexpiry!,     # Get/set permissions
+       haspermission, permissions_conflict,           # Other permission queries
+       create!, read, update!, delete!,               # Actions on resources
+       @add_required_fields_resource,  # Used when constructing concrete subtypes of AbstractResource
+       @add_required_fields_client     # Used when constructing concrete subtypes of AbstractClient
 
 
 using Dates
+
+import Base.read, Base.delete!
 
 
 ################################################################################
@@ -84,45 +86,7 @@ macro add_required_fields_client()
 end
 
 ################################################################################
-# Verbs
-
-function create!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-    if !haspermission(client, resource, :create)
-        return false, "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
-    end
-    m = parentmodule(typeof(resource))
-    m._create!(resource, args...)
-end
-
-
-function read(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-    if !haspermission(client, resource, :read)
-        return nothing, "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)"
-    end
-    m = parentmodule(typeof(resource))
-    m._read(resource, args...)
-end
-
-
-function update!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-    if !haspermission(client, resource, :update)
-        return false, "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
-    end
-    m = parentmodule(typeof(resource))
-    m._update!(resource, args...)
-end
-
-
-function delete!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-    if !haspermission(client, resource, :delete)
-        return false, "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
-    end
-    m = parentmodule(typeof(resource))
-    m._delete!(resource, args...)
-end
-
-################################################################################
-# Conveniences
+# Get/set permissions
 
 """
 Returns the Permission object for client-resource combination if it exists, else returns nothing.
@@ -171,20 +135,6 @@ end
 
 
 """
-Returns true if the client has permission to act on the resource according to the given verb.
-
-Verb must be one of :create, :read, :update, :delete.
-"""
-function haspermission(client::C, resource::R, verb::Symbol) where {C <: AbstractClient, R <: AbstractResource}
-    p = getpermission(client, resource)
-    p == nothing               && return false  # Permission not explicitly granted
-    getfield(p, verb) == false && return false  # Permission explicitly denied
-    p.expiry < now()           && return false  # Permission has expired
-    true
-end
-
-
-"""
 Set the expiry of every permission of the client to the given expiry.
 """
 function setexpiry!(client::C, expry::DateTime) where {C <: AbstractClient}
@@ -193,6 +143,23 @@ function setexpiry!(client::C, expry::DateTime) where {C <: AbstractClient}
             d[k] = Permission(p.create, p.read, p.update, p.delete, expry)
         end
     end
+end
+
+
+################################################################################
+# Permission queries
+
+"""
+Returns true if the client has permission to act on the resource according to the given action.
+
+Action ust be one of :create, :read, :update, :delete.
+"""
+function haspermission(client::C, resource::R, action::Symbol) where {C <: AbstractClient, R <: AbstractResource}
+    p = getpermission(client, resource)
+    p == nothing                 && return false  # Permission not explicitly granted
+    getfield(p, action) == false && return false  # Permission explicitly denied
+    p.expiry < now()             && return false  # Permission has expired
+    true
 end
 
 
@@ -206,5 +173,41 @@ function permisssions_conflict(client::C, resourceid::String) where {C <: Abstra
     end
     nmatches > 1  # More than 1 pattern matches the resource id
 end
+
+
+################################################################################
+# Actions on resources
+
+"Create resource. If successful return nothing, else return an error message as a String."
+function create!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+!haspermission(client, resource, :create) && return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
+    m = parentmodule(typeof(resource))
+    m._create!(resource, args...)
+end
+
+
+"Read resource. If successful return (true, value), else return (false, errormessage::String)."
+function read(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+    !haspermission(client, resource, :read) && return "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)"
+    m = parentmodule(typeof(resource))
+    m._read(resource, args...)
+end
+
+
+"Update resource. If successful return nothing, else return an error message as a String."
+function update!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+!haspermission(client, resource, :update) && return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
+    m = parentmodule(typeof(resource))
+    m._update!(resource, args...)
+end
+
+
+"Delete resource. If successful return nothing, else return an error message as a String."
+function delete!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+!haspermission(client, resource, :delete) && return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
+    m = parentmodule(typeof(resource))
+    m._delete!(resource, args...)
+end
+
 
 end
