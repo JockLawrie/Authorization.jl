@@ -128,8 +128,8 @@ function setpermission!(client::C, resourceid_pattern::Regex, p::Permission) whe
 end
 
 
-function setpermission!(client::C, R::DataType, p::Permission) where {C <: AbstractClient}
-    !(R <: AbstractResource) && error("Type $(R) is not a subtype of AbstractResource.")
+function setpermission!(client::C, resourcetype::DataType, p::Permission) where {C <: AbstractClient}
+    !(resourcetype <: AbstractResource) && error("Type $(resourcetype) is not a subtype of AbstractResource.")
     client.type2permission[resourcetype] = p
 end
 

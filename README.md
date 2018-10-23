@@ -1,6 +1,6 @@
 # Authorization.jl
 
-A small but flexible API for controlling an _authenticated_ client's access to resources.
+A small but flexible API for controlling an __authenticated__ client's access to resources.
 
 See the bottom of this README for use cases.
 
@@ -60,8 +60,8 @@ This framework allows both fine-grained and somewhat coarse access control withi
 
 ## Resource Access
 
-Use `haspermission(client, resource, verb)` to determine whether the client has permission to act (create/read/update/delete) on the resource.
-Here the `verb` is one of `:create`, `:read`, `:update`, `:delete`.
+Use `haspermission(client, resource, action)` to determine whether the client has permission to act (create/read/update/delete) on the resource.
+Here the `action` is one of `:create`, `:read`, `:update`, `:delete`.
 
 For convenience this package also provides `create!`, `read`, `update!` and `delete!`.
 Each has the same signature, namely `(client, resource, args...)`.
@@ -77,13 +77,14 @@ Each works as follows:
 
 ### Data Storage
 
-This authorization framework is used in [`AbstractBucketStores`](), which defines a common interface for bucket storage.
+In bucket storage, data is stored as objects and objects are grouped into buckets.
+The [`BucketStores`]() package defines a client for bucket storage and allows the storage backend to be swapped without changing any code.
 
-Data is stored as objects, and objects are grouped into buckets.
+Examples of storage backends include:
+- [`LocalDiskStores.jl`](), which uses the local file system to store objects (files) in buckets (directories).
+- [`GCPBucketStores.jl`](), which uses Google Cloud Storage.
 
-Examples include [`LocalDiskStores.jl`]() and [`GCPBucketStores.jl`](), which use the local file system and Google Cloud Storage respectively as storage back-ends.
-
-The bucket storage interface enables different storage back-ends to be used without altering any code.
+This authorization framework is used to control access to buckets and objects.
 
 
 ### Web app authorization
