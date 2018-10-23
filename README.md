@@ -58,6 +58,23 @@ The levels are:
 
 This framework allows both fine-grained and somewhat coarse access control within the same client, provided the permissions don't conflict within a level of the hierarchy (test for conflicts via `permissions_conflict(client, resourceid)`).
 
+Here's a quick sample of the API:
+
+```julia
+# Allow cRud (read-only) access without expiry to resources with type resource_type
+setpermission!(client, resource_type, Permission(false, true, false, false))
+
+# Allow CRUD (read/write) access for 5 minutes to resources with IDs starting with "mycollection/"
+setpermission!(store, r"mycollection/*", Permission(true, true, true, true, now() + Minute(5)))
+
+p = getpermission(client, resource)  # Get the permission settings for the specific resource
+setexpiry!(client, now() + Hour(1))  # Set an expiry for all the resources that the client has access to
+
+haspermission(store, resource, :create)     # True if the client has :create access to the resource
+permissions_conflict(client, "myresource")  # True if the rules that define the client's access to the resource with ID "myresource" conflict
+```
+
+
 ## Resource Access
 
 Use `haspermission(client, resource, action)` to determine whether the client has permission to act (create/read/update/delete) on the resource.
@@ -82,7 +99,7 @@ The [`BucketStores`]() package defines a client for bucket storage and allows th
 
 Examples of storage backends include:
 - [`LocalDiskStores.jl`](), which uses the local file system to store objects (files) in buckets (directories).
-- [`GCPBucketStores.jl`](), which uses Google Cloud Storage.
+- [`GCSBucketStores.jl`](), which uses Google Cloud Storage.
 
 This authorization framework is used to control access to buckets and objects.
 
@@ -96,3 +113,17 @@ Suppose a user's access is determined by his/her subscription to an app.
 Then, for example, `setpermission!(client, App, permission)` sets permissions for all resources related to the app with type `App`.
 Also, `setexpiry(client, expiry)` can be used to set an expiry on all resources to which the client has access.
 The client can then be used as the session object.
+
+
+## Developing a new client
+
+If you are developing a new client for some resources and would like to use this framework:
+
+1. Ensure that the type of your client is a subtype of `AbstractClient`.
+   This abstract type has some madatory fields, which you can include in your client type by calling the `@add_required_fields_client` macro.
+   You can also include fields that are specific to your client type.
+   See the docstring for the `@add_required_fields_client` macro for details.
+
+2. Similarly, ensure that the types of your resources are subtypes of `AbstractResource`.
+   Including `@add_required_fields_resource` macro in your type definitions will ensure that your resources have the required fields.
+   See the docstring for the `@add_required_fields_resource` macro for details.
