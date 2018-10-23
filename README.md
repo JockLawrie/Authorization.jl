@@ -113,6 +113,8 @@ Suppose a user's access is determined by his/her subscription to an app.
 Then, for example, `setpermission!(client, App, permission)` sets permissions for all resources related to the app with type `App`.
 Also, `setexpiry(client, expiry)` can be used to set an expiry on all resources to which the client has access.
 The client can then be used as the session object.
+When a request comes in, the client and requested resource can be identified from the request (and perhaps server state).
+Determining whether the client has permission to access the resource is then a matter of calling `haspermission`.
 
 
 ## Developing a new client
