@@ -188,7 +188,9 @@ end
 
 "Read resource. If successful return (true, value), else return (false, errormessage::String)."
 function read(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-    !haspermission(client, resource, :read) && return "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)"
+    if !haspermission(client, resource, :read)
+        return (false, "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)")
+    end
     m = parentmodule(typeof(resource))
     m._read(resource, args...)
 end

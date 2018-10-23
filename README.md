@@ -65,29 +65,29 @@ Here's a quick sample of the API:
 setpermission!(client, resource_type, Permission(false, true, false, false))
 
 # Allow CRUD (read/write) access for 5 minutes to resources with IDs starting with "mycollection/"
-setpermission!(store, r"mycollection/*", Permission(true, true, true, true, now() + Minute(5)))
+setpermission!(client, r"mycollection/*", Permission(true, true, true, true, now() + Minute(5)))
 
 p = getpermission(client, resource)  # Get the permission settings for the specific resource
 setexpiry!(client, now() + Hour(1))  # Set an expiry for all the resources that the client has access to
 
-haspermission(store, resource, :create)     # True if the client has :create access to the resource
+haspermission(client, resource, :create)    # True if the client has :create access to the resource
 permissions_conflict(client, "myresource")  # True if the rules that define the client's access to the resource with ID "myresource" conflict
 ```
 
 
-## Resource Access
+## Accessing Resources
 
-Use `haspermission(client, resource, action)` to determine whether the client has permission to act (create/read/update/delete) on the resource.
+Use `haspermission(client, resource, action)` to determine whether the client has permission to act on the resource (create/read/update/delete).
 Here the `action` is one of `:create`, `:read`, `:update`, `:delete`.
 
-For convenience this package also provides `create!`, `read`, `update!` and `delete!`.
+This package also provides `create!`, `read`, `update!` and `delete!`.
 Each has the same signature, namely `(client, resource, args...)`.
 Each works as follows:
 - Check whether the client has permission to act on the resource.
-- If so, act on the resource.
-  - If all is well, return `(true, "")`
-  - Else return `(false, message)`
-- If not, return `(false, message)`
+    - If so, act on the resource.
+        - If all is well, return `nothing` when creating/updating/deleting, and return `(true, value)` when reading
+        - Else return an error message when creating/updating/deleting, and return `(false, error message)` when reading
+    - Else return an error message when creating/updating/deleting, and return `(false, error message)` when reading
 
 
 ## Use Cases
