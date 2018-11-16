@@ -179,36 +179,42 @@ end
 # Actions on resources
 
 "Create resource. If successful return nothing, else return an error message as a String."
-function create!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :create) && return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
+function create!(client::C, resource::R, val...) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :create)
+        return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
+    end
     m = parentmodule(typeof(resource))
-    m._create!(resource, args...)
+    m._create!(client, resource, val...)
 end
 
 
 "Read resource. If successful return (true, value), else return (false, errormessage::String)."
-function read(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+function read(client::C, resource::R) where {C <: AbstractClient, R <: AbstractResource}
     if !haspermission(client, resource, :read)
         return (false, "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)")
     end
     m = parentmodule(typeof(resource))
-    m._read(resource, args...)
+    m._read(client, resource)
 end
 
 
 "Update resource. If successful return nothing, else return an error message as a String."
-function update!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :update) && return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
+function update!(client::C, resource::R, val...) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :update)
+        return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
+    end
     m = parentmodule(typeof(resource))
-    m._update!(resource, args...)
+    m._update!(client, resource, val...)
 end
 
 
 "Delete resource. If successful return nothing, else return an error message as a String."
-function delete!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :delete) && return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
+function delete!(client::C, resource::R) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :delete)
+        return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
+    end
     m = parentmodule(typeof(resource))
-    m._delete!(resource, args...)
+    m._delete!(client, resource)
 end
 
 
