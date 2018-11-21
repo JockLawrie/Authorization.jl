@@ -183,7 +183,7 @@ function create!(client::C, resource::R, val...) where {C <: AbstractClient, R <
     if !haspermission(client, resource, :create)
         return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
     end
-    m = parentmodule(typeof(resource))
+    m = parentmodule(typeof(client))
     m._create!(client, resource, val...)
 end
 
@@ -193,7 +193,7 @@ function read(client::C, resource::R) where {C <: AbstractClient, R <: AbstractR
     if !haspermission(client, resource, :read)
         return (false, "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)")
     end
-    m = parentmodule(typeof(resource))
+    m = parentmodule(typeof(client))
     m._read(client, resource)
 end
 
@@ -203,7 +203,7 @@ function update!(client::C, resource::R, val...) where {C <: AbstractClient, R <
     if !haspermission(client, resource, :update)
         return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
     end
-    m = parentmodule(typeof(resource))
+    m = parentmodule(typeof(client))
     m._update!(client, resource, val...)
 end
 
@@ -213,7 +213,7 @@ function delete!(client::C, resource::R) where {C <: AbstractClient, R <: Abstra
     if !haspermission(client, resource, :delete)
         return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
     end
-    m = parentmodule(typeof(resource))
+    m = parentmodule(typeof(client))
     m._delete!(client, resource)
 end
 
