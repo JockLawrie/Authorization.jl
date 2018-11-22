@@ -3,13 +3,12 @@ module Authorization
 export AbstractResource, AbstractClient, Permission,  # Types
        getpermission, setpermission!, setexpiry!,     # Get/set permissions
        haspermission, permissions_conflict,           # Other permission queries
-       create!, read, update!, delete!,               # Actions on resources
-       @add_required_fields_resource,  # Used when constructing concrete subtypes of AbstractResource
-       @add_required_fields_client     # Used when constructing concrete subtypes of AbstractClient
+       create!, read, update!, delete!                # Actions on resources
 
 
 using Dates
 
+# Methods that are extended in this package
 import Base.read, Base.delete!
 
 
@@ -27,63 +26,22 @@ end
 Permission(c, r, u, d) = Permission(c, r, u, d, now() + Year(1000))  # Effectively no expiry
 
 
+"""
+Required fields:
+- id::String
+"""
 abstract type AbstractResource end
 
 
 """
-Add fields that are required by all concrete subtypes of AbstractResource.
-
-Use this macro when defining a concrete subtype of AbstractResource.
-
-Example 1 - No other fields
-
-  struct MyResource <: AbstractResource
-      @add_required_fields_resource  # Fields that all resources require
-  end
-
-Example 2 - The resource type contains fields that are specific to the type
-
-  struct MyOtherResource <: AbstractResource
-      @add_required_fields_resource  # Fields that all resources require
-      otherfield1::Int               # Field that is specific to MyOtherResource
-      otherfield2::String            # Field that is specific to MyOtherResource
-  end
+Required fields:
+- id::String;
+- id2permission::Dict{String, Permission};        # Resource ID => Permission
+- idpattern2permission::Dict{Regex, Permission};  # Resource ID pattern => Permission
+- type2permission::Dict{DataType, Permission};    # Resource type => Permission
 """
-macro add_required_fields_resource()
-    return esc(:(id::String))
-end
-
-
 abstract type AbstractClient end
 
-
-"""
-Add fields that are required by all concrete subtypes of AbstractClient.
-
-Use this macro when defining a concrete subtype of AbstractClient.
-
-Example 1 - No other fields
-
-  struct MyClient <: AbstractClient
-      @add_required_fields_client  # Fields that all clients require
-  end
-
-Example 2 - The client type contains fields that are specific to the type
-
-  struct MyOtherClient <: AbstractClient
-      @add_required_fields_client  # Fields that all client require
-      otherfield1::Int             # Field that is specific to MyOtherClient
-      otherfield2::String          # Field that is specific to MyOtherClient
-  end
-"""
-macro add_required_fields_client()
-    return esc(:(
-                 id::String;
-                 id2permission::Dict{String, Permission};        # Resource ID => Permission
-                 idpattern2permission::Dict{Regex, Permission};  # Resource ID pattern => Permission
-                 type2permission::Dict{DataType, Permission};    # Resource type => Permission
-                ))
-end
 
 ################################################################################
 # Get/set permissions
@@ -179,36 +137,42 @@ end
 # Actions on resources
 
 "Create resource. If successful return nothing, else return an error message as a String."
-function create!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :create) && return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
-    m = parentmodule(typeof(resource))
-    m._create!(resource, args...)
+function create!(client::C, resource::R, val...) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :create)
+        return "$(typeof(client)) $(client.id) does not have permission to create $(typeof(resource)) $(resource.id)"
+    end
+    m = parentmodule(typeof(client))
+    m._create!(client, resource, val...)
 end
 
 
 "Read resource. If successful return (true, value), else return (false, errormessage::String)."
-function read(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
+function read(client::C, resource::R) where {C <: AbstractClient, R <: AbstractResource}
     if !haspermission(client, resource, :read)
         return (false, "$(typeof(client)) $(client.id) does not have permission to read $(typeof(resource)) $(resource.id)")
     end
-    m = parentmodule(typeof(resource))
-    m._read(resource, args...)
+    m = parentmodule(typeof(client))
+    m._read(client, resource)
 end
 
 
 "Update resource. If successful return nothing, else return an error message as a String."
-function update!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :update) && return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
-    m = parentmodule(typeof(resource))
-    m._update!(resource, args...)
+function update!(client::C, resource::R, val...) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :update)
+        return "$(typeof(client)) $(client.id) does not have permission to update $(typeof(resource)) $(resource.id)"
+    end
+    m = parentmodule(typeof(client))
+    m._update!(client, resource, val...)
 end
 
 
 "Delete resource. If successful return nothing, else return an error message as a String."
-function delete!(client::C, resource::R, args...) where {C <: AbstractClient, R <: AbstractResource}
-!haspermission(client, resource, :delete) && return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
-    m = parentmodule(typeof(resource))
-    m._delete!(resource, args...)
+function delete!(client::C, resource::R) where {C <: AbstractClient, R <: AbstractResource}
+    if !haspermission(client, resource, :delete)
+        return "$(typeof(client)) $(client.id) does not have permission to delete $(typeof(resource)) $(resource.id)"
+    end
+    m = parentmodule(typeof(client))
+    m._delete!(client, resource)
 end
 
 
