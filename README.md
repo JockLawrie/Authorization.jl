@@ -2,7 +2,7 @@
 
 A small but flexible API for controlling an __authenticated__ client's access to resources.
 
-See the bottom of this README for use cases.
+Some use cases are listed at the bottom of this README.
 
 
 ## Resources
@@ -92,14 +92,14 @@ Each works as follows:
 
 ## Use Cases
 
-### Data Storage
+### Object Storage
 
-In bucket storage, data is stored as objects and objects are grouped into buckets.
-The [`BucketStores`]() package defines a client for bucket storage and allows the storage backend to be swapped without changing any code.
+In object storage, data is stored as objects and objects are grouped into buckets.
+The [ObjectStores](https://github.com/JockLawrie/ObjectStores.jl) package defines a common API for object storage that allows the storage back-end to be swapped without changing any code.
 
-Examples of storage backends include:
-- [`LocalDiskStores.jl`](), which uses the local file system to store objects (files) in buckets (directories).
-- [`GCSBucketStores.jl`](), which uses Google Cloud Storage.
+Examples of object stores include:
+- [LocalDiskObjectStores.jl](https://github.com/JockLawrie/LocalDiskObjectStores.jl), which uses the local file system to store objects (files) in buckets (directories).
+- [GCSObjectStores.jl](https://github.com/JockLawrie/GCSObjectStores.jl), which uses Google Cloud Storage as the storage back-end.
 
 This authorization framework is used to control access to buckets and objects.
 
@@ -122,10 +122,8 @@ Determining whether the client has permission to access the resource is then a m
 If you are developing a new client for some resources and would like to use this framework:
 
 1. Ensure that the type of your client is a subtype of `AbstractClient`.
-   This abstract type has some madatory fields, which you can include in your client type by calling the `@add_required_fields_client` macro.
+   Concrete subtypes are required to include some mandatory fields - see the `AbstractClient` dosctring.
    You can also include fields that are specific to your client type.
-   See the docstring for the `@add_required_fields_client` macro for details.
 
 2. Similarly, ensure that the types of your resources are subtypes of `AbstractResource`.
-   Including `@add_required_fields_resource` macro in your type definitions will ensure that your resources have the required fields.
-   See the docstring for the `@add_required_fields_resource` macro for details.
+   Also ensure that your concrete subtypes of `AbstractResource` have an `id::String` field.
