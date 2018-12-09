@@ -99,7 +99,7 @@ The [ObjectStores](https://github.com/JockLawrie/ObjectStores.jl) package define
 
 Examples of object stores include:
 - [LocalDiskObjectStores.jl](https://github.com/JockLawrie/LocalDiskObjectStores.jl), which uses the local file system to store objects (files) in buckets (directories).
-- [GCSObjectStores.jl](https://github.com/JockLawrie/GCSObjectStores.jl), which uses Google Cloud Storage as the storage back-end.
+- [GoogleCloudObjectStores.jl](https://github.com/JockLawrie/GoogleCloudObjectStores.jl), which uses Google Cloud Storage as the storage back-end.
 
 This authorization framework is used to control access to buckets and objects.
 
